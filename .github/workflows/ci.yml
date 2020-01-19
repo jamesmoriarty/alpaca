@@ -3,7 +3,7 @@ name: Continuous Integration
 on: [push]
 
 jobs:
-  script:
+  test:
     runs-on: ubuntu-16.04
 
     strategy:
@@ -11,10 +11,14 @@ jobs:
         go: [ '1.13' ]
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v1
-      with:
-        go-version: ${{ matrix.go }}
-    - run: gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*") 2>&1
-    - run: go build -v .
-    - run: go test .
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+
+      - run: gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*") 2>&1
+
+      - run: go build -v .
+
+      - run: go test .

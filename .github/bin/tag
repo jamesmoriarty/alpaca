@@ -1,0 +1,12 @@
+#!/bin/sh
+
+[ "$#" -ge "1" ] || { echo "usage: $0 v1.0.11"; exit 1; }
+
+set -x
+
+tag=$1
+
+git tag --delete $tag
+git push origin :$tag
+git tag $tag
+git push --tags
