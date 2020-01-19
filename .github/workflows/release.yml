@@ -20,6 +20,11 @@ jobs:
           draft: false
           prerelease: false
         id: create_release
+      - run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+      - uses: actions/upload-artifact@v1
+        with:
+          name: release_url
+          path: release_url.txt
 
   build:
     runs-on: macos-latest
@@ -44,11 +49,20 @@ jobs:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
 
+    - id: get_release_info
+      run: |
+        echo ::set-output name=file_name::${REPOSITORY_NAME##*/}-${TAG_REF_NAME##*/v} # RepositoryName-v1.0.0
+        value=`cat release_url/release_url.txt`
+        echo ::set-output name=upload_url::$value
+      env:
+        TAG_REF_NAME: ${{ github.ref }}
+        REPOSITORY_NAME: ${{ github.repository }}
+
     - uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        upload_url: ${{ steps.get_release_info.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
         asset_path: ./${{ matrix.goos }}-${{ matrix.goarch }}
         asset_name: ${{ matrix.goos }}-${{ matrix.goarch }}
         asset_content_type: application/zip
