@@ -1,20 +1,64 @@
 name: Continuous Integration
 
-on: [push]
+on: [ push ]
 
 jobs:
-  script:
-    runs-on: ubuntu-16.04
-
+  lint:
     strategy:
-      matrix:
+      matrix: 
+        os: [ 'macos-latest' ]
         go: [ '1.13' ]
 
+    runs-on: ${{ matrix.os }}
+
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v1
-      with:
-        go-version: ${{ matrix.go }}
-    - run: gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*") 2>&1
-    - run: go build -v .
-    - run: go test .
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+ 
+      - run: gofmt 2>&1
+
+  test:
+    strategy:
+      matrix: 
+        os: [ 'macos-latest', 'ubuntu-16.04' ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+
+      - run: go test ./...
+
+  build:
+    strategy:
+      matrix:
+        target:
+          - os: 'macos-latest'
+            goos: 'darwin'
+            goarch: 'amd64'
+          - os: 'ubuntu-16.04'
+            goos: 'linux'
+            goarch: 'amd64'
+        go: [ '1.13' ]
+
+    runs-on: ${{ matrix.target.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+
+      - run: go build -v .
+        env:
+          GOOS: ${{ matrix.target.goos }}
+          GOARCH: ${{ matrix.target.goarch }}
+          CGO_ENABLED: 1
